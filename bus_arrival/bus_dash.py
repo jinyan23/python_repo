@@ -3,61 +3,53 @@ from dash import Dash, html, dcc
 import plotly.express as px
 import pandas as pd
 
+# Import custom functions
+from bus import bus
+
 app = Dash(__name__)
 
 colors = {"background": "#111111",
           "text": "#7FDBFF"}
 
 # Data frame for bus arrival timings here
-df = pd.DataFrame({
-    "Fruit": ["Apple", "Oranges", "Bananas", "Apples", "Oranges", "Bananas"],
-    "Amount": [4, 1, 2, 2, 4, 5],
-    "City": ["SF", "SF", "SF", "Montreal", "Montreal", "Montreal"]
-})
+bus_arrivals = bus()
 
-fig = px.bar(df, x="Fruit", y="Amount", color="City", barmode="group")
+def generate_table(df, max_rows=20):
+    return html.Table([
+        
+        html.Thead(
+            html.Tr([html.Th(col) for col in df.columns])
+        ),
+        
+        html.Tbody([
+            html.Tr([
+                html.Td(df.iloc[i][col]) for col in df.columns
+            ]) for i in range(min(len(df), max_rows))
+        ])
+        
+    ])
 
-fig.update_layout(
-    plot_bgcolor=colors['background'],
-    paper_bgcolor=colors['background'],
-    font_color=colors['text']
-)
 
-app.layout = html.Div(
+app.layout = html.Div([
     
-    style={"backgroundColor": colors["background"]},
+    html.Label("Insert Bus Stop ID: "),
     
-    children=[
-        
-        html.H1(
-            style={"textAlign": "center",
-                   "color": colors["text"]},
-            children="Hello Dash"
-            ),
-        
-        html.Div(
-            style={"textAlign": "center",
-                   "color": colors["text"]},
-            children='''Dash: A web application framework for your data.'''
-            ),
-        
-        dcc.Graph(
-            id="example-graph",
-            figure=fig
-            )
-        
-        ]
-    )
+    # dcc Callback
+    dcc.Input(value='04111', type='text'),
+    
+    html.Br(),
+    
+    html.H4(children="Bus Arrival Timings"),
+    generate_table(bus_arrivals)
+    
+])
 
 
 if __name__ == "__main__":
     app.run_server(debug=True)
 
-
-# requires a dataframe
-# plots graph
-
-# H1
-# Div
-# dcc.Graph
-
+# dcc.Dropdown([Input List])
+# dcc.RadioItems([Input List])
+# dcc.Checklist([Input List])
+# dcc.Input(value="default", type="text")
+# dcc.Slider(min=0, max=10, **kwargs)

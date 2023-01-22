@@ -5,10 +5,26 @@ import pandas as pd
 from get_arrivals import get_arrivals
 from convert_time import convert_time
 
-def main():
+
+
+def bus():
+    
+    """
+    This function will be called into the Python Dash dashboard and takes in an
+    argument that is user input from the dashboard.
+    
+    Takes in an argument:
+    1) Bus stop ID
+    
+    Returns a data frame containing the list of bus services at the queried bus
+    stop.
+    """
+    
+    # Check if bus stop ID and bus service number are integers.
+    # Returns None if invalid.
     
     # Get bus arrival timings from specific bus stop code.
-    jsonObj = get_arrivals(bus_stop_code = "30089")     # To request user input here
+    jsonObj = get_arrivals(bus_stop_code = "04111")     
 
     # Extract bus arrival timings from JSON object.
     service_num = [bus["ServiceNo"] for bus in jsonObj["Services"]]
@@ -27,7 +43,9 @@ def main():
                             "Next Bus 3": nb_3_min})
 
     # Print out data frame coming bus arrival timings in minutes
-    print("After Conversion:\n", bus_list.sort_values(by="Service Number"))
+    # print("After Conversion:\n", bus_list.sort_values(by="Service Number"))
+    
+    return bus_list
 
 if __name__ == "__main__":
-    main()
+    bus()
