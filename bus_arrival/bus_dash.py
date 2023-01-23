@@ -1,20 +1,42 @@
 # Import modules
-from dash import Dash, html, dcc
-import plotly.express as px
+from dash import Dash, html, dcc, Input, Output
 import pandas as pd
+import dash_bootstrap_components as dbc
 
 # Import custom functions
 from bus import bus
 
 app = Dash(__name__)
 
-colors = {"background": "#111111",
-          "text": "#7FDBFF"}
+# dbc not working yet
+app.layout = html.Div([
+    
+    dbc.Row([
+        
+        dbc.Col(html.Label("Insert Bus Stop ID: "), md=4),
+        dbc.Col(html.Label("Another Column"), md=8)
+    
+    ]),
+    
+    # dcc Callback
+    dbc.Row([
+        dbc.Col(children=[]),
+        dcc.Input(id="my-input", value='04111', type='text')
+    ]),
+        
+    html.H4(children="Bus Arrival Timings"),
+    html.Div(id="my-output")
+        
+])
 
-# Data frame for bus arrival timings here
-bus_arrivals = bus()
-
-def generate_table(df, max_rows=20):
+@app.callback(
+    Output(component_id="my-output", component_property="children"),
+    Input(component_id="my-input", component_property="value")
+)
+def update_table(input_value):
+    
+    df = bus(input_value)
+    
     return html.Table([
         
         html.Thead(
@@ -23,33 +45,13 @@ def generate_table(df, max_rows=20):
         
         html.Tbody([
             html.Tr([
-                html.Td(df.iloc[i][col]) for col in df.columns
-            ]) for i in range(min(len(df), max_rows))
+                html.Td(df.iloc[i][col]) for col in df.columns  # type: ignore
+            ]) for i in range(min(len(df), 30))
         ])
         
     ])
 
 
-app.layout = html.Div([
-    
-    html.Label("Insert Bus Stop ID: "),
-    
-    # dcc Callback
-    dcc.Input(value='04111', type='text'),
-    
-    html.Br(),
-    
-    html.H4(children="Bus Arrival Timings"),
-    generate_table(bus_arrivals)
-    
-])
-
-
 if __name__ == "__main__":
     app.run_server(debug=True)
 
-# dcc.Dropdown([Input List])
-# dcc.RadioItems([Input List])
-# dcc.Checklist([Input List])
-# dcc.Input(value="default", type="text")
-# dcc.Slider(min=0, max=10, **kwargs)

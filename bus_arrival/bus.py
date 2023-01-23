@@ -7,7 +7,7 @@ from convert_time import convert_time
 
 
 
-def bus():
+def bus(id):
     
     """
     This function will be called into the Python Dash dashboard and takes in an
@@ -24,7 +24,7 @@ def bus():
     # Returns None if invalid.
     
     # Get bus arrival timings from specific bus stop code.
-    jsonObj = get_arrivals(bus_stop_code = "04111")     
+    jsonObj = get_arrivals(bus_stop_code = id)     
 
     # Extract bus arrival timings from JSON object.
     service_num = [bus["ServiceNo"] for bus in jsonObj["Services"]]
@@ -48,4 +48,4 @@ def bus():
     return bus_list
 
 if __name__ == "__main__":
-    bus()
+    bus(id)

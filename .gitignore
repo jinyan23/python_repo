@@ -2,5 +2,4 @@
 .DS_Store
 bus_arrival/bus.ipynb
 bus_arrival/__pycache__
-lending.xlsx
-lending.ipynb
+bus_arrival/scratch_file.py
