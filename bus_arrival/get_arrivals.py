@@ -4,7 +4,7 @@ import httplib2 as http
 from urllib.parse import urlparse
 
 # Read in Token
-with open("../../python_repo_doc/bus_arrival_doc/LTA_AccountKey") as k:
+with open("../../python_repo_doc/bus_arrival_doc/LTA_AccountKey") as k: # type: ignore
     key = k.readlines()
 
 # LTA Datamall API

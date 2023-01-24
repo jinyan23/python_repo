@@ -20,11 +20,16 @@ def bus(id):
     stop.
     """
     
-    # Check if bus stop ID and bus service number are integers.
-    # Returns None if invalid.
+    # Check if bus stop ID is valid.
+    if not id.isdigit() or len(id) != 5:
+        err_message = "Invalid bus stop ID."
+    elif not id in (["12345", "23456"]):
+        err_message = "Bus stop does not exist."
+    else:
+        err_message = None
     
     # Get bus arrival timings from specific bus stop code.
-    jsonObj = get_arrivals(bus_stop_code = id)     
+    jsonObj = get_arrivals(bus_stop_code = id)
 
     # Extract bus arrival timings from JSON object.
     service_num = [bus["ServiceNo"] for bus in jsonObj["Services"]]
@@ -45,7 +50,7 @@ def bus(id):
     # Print out data frame coming bus arrival timings in minutes
     # print("After Conversion:\n", bus_list.sort_values(by="Service Number"))
     
-    return bus_list
+    return bus_list, err_message
 
 if __name__ == "__main__":
     bus(id)
