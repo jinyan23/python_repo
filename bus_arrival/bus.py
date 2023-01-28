@@ -4,8 +4,9 @@ import pandas as pd
 # Import custom functions
 from get_arrivals import get_arrivals
 from convert_time import convert_time
+from bus_database import bus_database
 
-
+bus_db = bus_database()
 
 def bus(id):
     
@@ -51,6 +52,22 @@ def bus(id):
     # print("After Conversion:\n", bus_list.sort_values(by="Service Number"))
     
     return bus_list, err_message
+
+
+# Bus routes database (return list of bus stops in direction 1)
+# Bus routes database (return list of bus stops in direction 1)
+def route(service_num, direction=1):
+    
+    service_num_mask = bus_db["serviceNo"] == str(service_num)
+    direction_mask = bus_db["direction"] == direction
+    
+    stop_df = bus_db[service_num_mask & direction_mask]
+    
+    # Arrange bus stops in sequence of bus arrival
+    stop_df.sort_values(by="busStopSeq", ascending=True, inplace=True)
+        
+    return stop_df
+
 
 if __name__ == "__main__":
     bus(id)
