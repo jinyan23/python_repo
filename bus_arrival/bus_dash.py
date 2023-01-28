@@ -1,17 +1,18 @@
 # Import modules
+import warnings
 from dash import Dash, html, dcc, Input, Output, State
 import pandas as pd
 import plotly.express as px
 import dash_bootstrap_components as dbc
-
+import plotly.graph_objects as go
 
 # Import custom module
-from bus import bus
+from bus import bus, route
 
+warnings.filterwarnings('ignore')
 
 app = Dash(external_stylesheets=[dbc.themes.BOOTSTRAP],
            suppress_callback_exceptions=True)
-
 
 sidebar_style = {
     "position": "fixed",
@@ -33,8 +34,11 @@ sidebar = html.Div(
     [
         html.H3("Bus Arrival App", className="display-4"),
         html.Hr(),              # Draws a horizontal line
-        html.P("Enter Bus Stop ID Below", className="lead"),
+        html.P("Enter Bus Stop Code", className="lead"),
         dcc.Input(id="my-input", value='04111', type='text'),
+        html.Hr(),
+        html.P("Enter Bus Service Number", className="lead"),
+        dcc.Input(id="service-input", value='124', type='text'),
         html.Hr(),
         dbc.Nav(
             [
@@ -64,7 +68,9 @@ ptwo_content = html.Div(children=[
     html.Div(children="Work In Progress")])
 pthree_content = html.Div(children=[
     html.H4("Service Route of Bus"),
-    html.Div(children="Work In Progress")])
+    html.Div(children=[
+        dcc.Graph(id="map-output")
+    ])])
 
 
 # app.layout
@@ -94,7 +100,7 @@ def render_page_content(pathname):
     )
 
 
-# app.callback for bus arrival timing
+# app.callback for bus arrival timing (pane 1)
 @app.callback(
     Output(component_id="my-output", component_property="children"),
     Input(component_id="my-input", component_property="value")
@@ -117,5 +123,34 @@ def update_table(input_value):
         
     ])
 
+# app.callback for bus route map (pane 3)
+@app.callback(
+    Output(component_id="map-output", component_property="figure"),
+    Input(component_id="service-input", component_property="value")
+)
+def update_map(input_value):
+    
+    # Retrieve bus stop codes of bus routes for queried bus service number
+    q_bus_stops = route(service_num=input_value)
+    
+    # Plot latitude and longitude of bus stops onto map
+    line_trace = go.Scattermapbox(lat=q_bus_stops["latitude"], 
+                                  lon=q_bus_stops["longitude"],
+                                  mode="lines",
+                                  line=go.scattermapbox.Line(width=2, color="blue"),
+                                  hoverinfo="none")
+
+    fig = go.Figure(layout=go.Layout(mapbox_style="open-street-map",
+                                    mapbox=dict(center=dict(lat=1.349736,
+                                                            lon=103.814513),
+                                    zoom=10.3)))
+
+
+    fig.add_trace(line_trace)
+    fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0},
+                    showlegend=False)
+    
+    return fig
+    
 if __name__ == "__main__":
     app.run_server(debug=True)
