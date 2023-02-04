@@ -34,15 +34,9 @@ sidebar = html.Div(
     [
         html.H3("Bus Arrival App", className="display-4"),
         html.Hr(),              # Draws a horizontal line
-        html.P("Enter Bus Stop Code", className="lead"),
-        dcc.Input(id="my-input", value='04111', type='text'),
-        html.Hr(),
-        html.P("Enter Bus Service Number", className="lead"),
-        dcc.Input(id="service-input", value='124', type='text'),
-        html.Hr(),
         dbc.Nav(
             [
-                dbc.NavLink("Home", href="/", active="exact"),
+                dbc.NavLink("Bus Arrival", href="/bus-arrival", active="exact"),
                 dbc.NavLink("Map", href="/map", active="exact"),
                 dbc.NavLink("Service Route", href="/service-route", active="exact"),
             ],
@@ -60,15 +54,22 @@ content = html.Div(id="page-content", style=content_style)
 # Set the content of the pages here
 pone_content = html.Div(children=[
     html.H4("Bus Arrival Timings"),
-    html.Div(id="my-output")
+    html.P("Enter Bus Stop Code", className="lead"),
+    dcc.Input(id="my-input", value='04111', type='text'),
+    html.Button("Submit", id="arr-button", n_clicks=0),
+    html.Hr(),
+    html.Div(id="my-output"),
 ])
-
 ptwo_content = html.Div(children=[
     html.H4("Map of Bus Stop Location"),
     html.Div(children="Work In Progress")])
 pthree_content = html.Div(children=[
     html.H4("Service Route of Bus"),
     html.Div(children=[
+        html.P("Enter Bus Service Number", className="lead"),
+        dcc.Input(id="service-input", value='124', type='text'),
+        html.Button("Submit", id="service-button", n_clicks=0),
+        html.Hr(),
         dcc.Graph(id="map-output")
     ])])
 
@@ -83,7 +84,7 @@ app.layout = html.Div([dcc.Location(id="url"), sidebar, content])
     Input("url", "pathname")
     )
 def render_page_content(pathname):
-    if pathname == "/":
+    if pathname == "/bus-arrival":
         return pone_content
     elif pathname == "/map":
         return ptwo_content
@@ -103,9 +104,10 @@ def render_page_content(pathname):
 # app.callback for bus arrival timing (pane 1)
 @app.callback(
     Output(component_id="my-output", component_property="children"),
-    Input(component_id="my-input", component_property="value")
+    Input(component_id="arr-button", component_property="n_clicks"),
+    State(component_id="my-input", component_property="value")
 )
-def update_table(input_value):
+def update_table(n_clicks, input_value):
     
     df, err_message = bus(input_value)
     
@@ -126,9 +128,10 @@ def update_table(input_value):
 # app.callback for bus route map (pane 3)
 @app.callback(
     Output(component_id="map-output", component_property="figure"),
-    Input(component_id="service-input", component_property="value")
+    Input(component_id="service-button", component_property="n_clicks"),
+    State(component_id="service-input", component_property="value")
 )
-def update_map(input_value):
+def update_map(n_clicks, input_value):
     
     # Retrieve bus stop codes of bus routes for queried bus service number
     q_bus_stops = route(service_num=input_value)
