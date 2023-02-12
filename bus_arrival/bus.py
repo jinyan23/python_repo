@@ -12,14 +12,18 @@ bus_db = bus_database()
 def bus(id):
     
     """
-    This function will be called into the Python Dash dashboard and takes in an
+    Description
+    -----------
+    Function will be called into the Python Dash dashboard and takes in an
     argument that is user input from the dashboard.
     
-    Takes in an argument:
-    1) Bus stop ID
-    
-    Returns a data frame containing the list of bus services at the queried bus
-    stop.
+    Parameters
+    ----------
+    id : integer of bus stop code
+
+    Returns
+    -------
+    Data frame containing the list of bus services at the queried bus stop.
     """
     
     # Check if bus stop ID is valid.
@@ -57,6 +61,26 @@ def bus(id):
 
 # Bus routes database (return list of bus stops in direction 1)
 def route(service_num, direction=1):
+     
+    """    
+    Description
+    -----------
+    Functions takes in bus service number and returns a list of bus stops 
+    serviced by the queried bus.
+    
+    Parameters
+    ----------
+    service_num : string of bus service number
+        Requires a string input as a bus service number. Some buses in Singapore
+        have alphabet suffixes at the tail of the service number. 
+    direction : integer
+        Buses ply in two directions, sometimes using different roads. 
+    
+    Returns
+    -------
+    Data frame containing the list of bus stops serviced by the queried bus 
+    service number.
+    """
     
     service_num_mask = bus_db["serviceNo"] == str(service_num)
     direction_mask = bus_db["direction"] == direction
@@ -70,6 +94,22 @@ def route(service_num, direction=1):
 
 
 def nearest():
+    
+    """    
+    Description
+    -----------
+    Functions calculates the distance between current location and bus stops
+    near the current location.
+    
+    Parameters
+    ----------
+    NA (at the moment)
+    
+    Returns
+    -------
+    Data frame containing the list of bus stops within 500m of current
+    location
+    """
     
     # Fix current location (near Mustafa Centre) coordinates in.
     curr_loc = [1.310429, 103.854368]
