@@ -1,5 +1,6 @@
 # Import modules
 import pandas as pd
+import math
 
 # Import custom functions
 from get_arrivals import get_arrivals
@@ -55,7 +56,6 @@ def bus(id):
 
 
 # Bus routes database (return list of bus stops in direction 1)
-# Bus routes database (return list of bus stops in direction 1)
 def route(service_num, direction=1):
     
     service_num_mask = bus_db["serviceNo"] == str(service_num)
@@ -67,6 +67,32 @@ def route(service_num, direction=1):
     stop_df.sort_values(by="busStopSeq", ascending=True, inplace=True)
         
     return stop_df
+
+
+def nearest():
+    
+    # Fix current location (near Mustafa Centre) coordinates in.
+    curr_loc = [1.310429, 103.854368]
+
+    # Calculate bus stops' distances from current location.
+    diff_lat = (curr_loc[0] - bus_db["latitude"])**2
+    diff_lon = (curr_loc[1] - bus_db["longitude"])**2
+
+    # Convert latitude/longitude difference into distance in metrics system
+    bus_db["distance"] = [math.sqrt(x + y)*111 for x, y in zip(diff_lat, diff_lon)]
+
+    # Subset bus stops which are 500 metres away from current location.
+    bs_output = bus_db[bus_db["distance"] < 0.5]
+    bs_output = (bs_output.drop(["serviceNo", "busStopSeq", "direction", 
+                                "latitude", "longitude", "distance"], axis=1)
+                        .drop_duplicates("busStopCode")
+                        .rename(columns={"busStopCode": "Bus Stop Code",
+                                        "roadName": "Road Name",
+                                        "description": "Description"})
+                        .sort_values("Description"))
+    
+    return bs_output
+
 
 
 if __name__ == "__main__":
