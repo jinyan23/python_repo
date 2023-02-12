@@ -7,10 +7,11 @@ import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
 
 # Import custom module
-from bus import bus, route
+from bus import bus, route, nearest
 
 warnings.filterwarnings('ignore')
 
+# Python dash app style sheets
 app = Dash(external_stylesheets=[dbc.themes.BOOTSTRAP],
            suppress_callback_exceptions=True)
 
@@ -36,8 +37,9 @@ sidebar = html.Div(
         html.Hr(),              # Draws a horizontal line
         dbc.Nav(
             [
+                dbc.NavLink("Home", href="/", active="exact"),
                 dbc.NavLink("Bus Arrival", href="/bus-arrival", active="exact"),
-                dbc.NavLink("Map", href="/map", active="exact"),
+                dbc.NavLink("Nearest Bus Stops", href="/nearest", active="exact"),
                 dbc.NavLink("Service Route", href="/service-route", active="exact"),
             ],
             vertical=True,
@@ -52,6 +54,10 @@ content = html.Div(id="page-content", style=content_style)
 
 
 # Set the content of the pages here
+phome_content = html.Div(children=[
+    html.H3("Bus Arrival Application"),
+    html.P("This is a web application that displays bus arrival timings, bus routes and locations of bus stops in Singapore. Data is retrieved via LTA Datamall API calls. This application displayed on the browser using Python Dash interactive interface.")
+])
 pone_content = html.Div(children=[
     html.H4("Bus Arrival Timings"),
     html.P("Enter Bus Stop Code", className="lead"),
@@ -61,8 +67,15 @@ pone_content = html.Div(children=[
     html.Div(id="my-output"),
 ])
 ptwo_content = html.Div(children=[
-    html.H4("Map of Bus Stop Location"),
-    html.Div(children="Work In Progress")])
+    html.H4("List of Bus Stops"),
+    html.Div(children=[
+        html.P("In mobile application for nearest bus stops display, the geolocation of the individual can be obtained via the GPS service available on the phone. However, for this web application, that service is unavailable. Thus, the geolocation for this demonstration is hard coded in. For mobile app, the geolocation will be updated, and the data will be used to calculate the distance to the nearest bus stops, thus allowing the display of the list of bus stops within the near vicinity of the individual."),
+        html.P("The bus stops displayed here are within 500 metres from this coordinates: [1.310429, 103.854368] along Serangoon Road near Farrer Park MRT Station."),
+        dcc.Input(id="near-input", value="1.310429, 103.854368", type='text'),
+        html.Hr()
+    ]),
+    html.Div(id="near-output")
+])
 pthree_content = html.Div(children=[
     html.H4("Service Route of Bus"),
     html.Div(children=[
@@ -84,9 +97,11 @@ app.layout = html.Div([dcc.Location(id="url"), sidebar, content])
     Input("url", "pathname")
     )
 def render_page_content(pathname):
-    if pathname == "/bus-arrival":
+    if pathname == "/":
+        return phome_content
+    elif pathname == "/bus-arrival":
         return pone_content
-    elif pathname == "/map":
+    elif pathname == "/nearest":
         return ptwo_content
     elif pathname == "/service-route":
         return pthree_content
@@ -124,6 +139,30 @@ def update_table(n_clicks, input_value):
         ])
         
     ])
+
+# app.callback for nearest bus list (pane 2)
+@app.callback(
+    Output(component_id="near-output", component_property="children"),
+    Input(component_id="near-input", component_property="value")
+)
+def update_bus_stops(input_value):
+    
+    bs_output = nearest()
+    
+    return html.Table([
+        
+        html.Thead(
+            html.Tr([html.Th(col) for col in bs_output.columns])
+        ),
+        
+        html.Tbody([
+            html.Tr([
+                html.Td(bs_output.iloc[i][col]) for col in bs_output.columns  # type: ignore
+            ]) for i in range(min(len(bs_output), 30))
+        ])
+        
+    ])
+
 
 # app.callback for bus route map (pane 3)
 @app.callback(
