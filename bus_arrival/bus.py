@@ -93,7 +93,7 @@ def route(service_num, direction=1):
     return stop_df
 
 
-def nearest():
+def nearest(geo_location):
     
     """    
     Description
@@ -111,8 +111,11 @@ def nearest():
     location
     """
     
-    # Fix current location (near Mustafa Centre) coordinates in.
-    curr_loc = [1.310429, 103.854368]
+    # Fix current location coordinates in.
+    if geo_location==None:
+        curr_loc = [1.310429, 103.854368]   # default location (Mustafa Centre)
+    else:
+        curr_loc = [float(i) for i in geo_location.split(", ")]
 
     # Calculate bus stops' distances from current location.
     diff_lat = (curr_loc[0] - bus_db["latitude"])**2
@@ -125,11 +128,11 @@ def nearest():
     bs_output = bus_db[bus_db["distance"] < 0.5]
     bs_output = (bs_output.drop(["serviceNo", "busStopSeq", "direction", 
                                 "latitude", "longitude", "distance"], axis=1)
-                        .drop_duplicates("busStopCode")
-                        .rename(columns={"busStopCode": "Bus Stop Code",
-                                        "roadName": "Road Name",
-                                        "description": "Description"})
-                        .sort_values("Description"))
+                          .drop_duplicates("busStopCode")
+                          .rename(columns={"busStopCode": "Bus Stop Code",
+                                           "roadName": "Road Name",
+                                           "description": "Description"})
+                          .sort_values("Description"))
     
     return bs_output
 
