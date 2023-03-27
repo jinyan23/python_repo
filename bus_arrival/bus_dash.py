@@ -2,6 +2,7 @@
 import warnings
 from dash import Dash, html, dcc, Input, Output, State
 import pandas as pd
+import numpy as np
 import plotly.express as px
 import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
@@ -83,12 +84,15 @@ ptwo_content = html.Div(children=[
     html.H4("List of Bus Stops"),
     html.Div(children=[
         html.P("In mobile application for nearest bus stops display, the geolocation of the individual can be obtained via the GPS service available on the phone. However, for this web application, that service is unavailable. Thus, the geolocation for this demonstration is hard coded in. For mobile app, the geolocation will be updated, and the data will be used to calculate the distance to the nearest bus stops, thus allowing the display of the list of bus stops within the near vicinity of the individual."),
-        html.P("The bus stops displayed here are within 500 metres from this coordinates: [1.310429, 103.854368] along Serangoon Road near Farrer Park MRT Station."),
+        dcc.Markdown("""An example with a pair of coordinates is shown here. Coordinates must be written in this exact syntax for now: `1.310429, 103.854368`. The bus stops displayed here are within 500 metres from this coordinates: `1.310429, 103.854368` along Serangoon Road near Farrer Park MRT Station. Coordinates can be retrieved from Google Maps to test the functionality of this page."""),
+        html.P("Enter Coordinates", className="lead"),
         dcc.Input(id="near-input", value="1.310429, 103.854368", type='text'),
         html.Button("Submit", id="near-button", n_clicks=0),
         html.Hr()
     ]),
-    html.Div(id="near-output")
+    html.Div(id="near-output"),
+    html.Hr(),
+    dcc.Graph(id="near-map-output")
 ])
 pthree_content = html.Div(children=[
     html.H4("Service Route of Bus"),
@@ -140,6 +144,7 @@ def render_page_content(pathname):
     )
 
 
+# Settings for html.Table output
 table_style = dict(border="2px solid",
                        width="80%",
                        textAlign="center")
@@ -151,6 +156,7 @@ head_style = dict(fontSize="20px",
 body_style = dict(border="1px solid",
                   borderLeft="1px solid",
                   borderRight="1px solid",)
+
 
 # app.callback for bus arrival timing (pane 1)
 @app.callback(
@@ -180,7 +186,8 @@ def update_table(n_clicks, input_value):
     
     )
 
-# app.callback for nearest bus list (pane 2)
+
+# first_callback: app.callback for nearest bus list (pane 2)
 @app.callback(
     Output(component_id="near-output", component_property="children"),
     Input(component_id="near-button", component_property="n_clicks"),
@@ -188,18 +195,19 @@ def update_table(n_clicks, input_value):
 )
 def update_bus_stops(n_clicks, input_value):
     
-    bs_output = nearest(input_value)
+    # Bus stops close to current locations
+    near_bs, bs_output = nearest(input_value)
         
     return html.Table([
         
         html.Thead(
-            html.Tr([html.Th(col, style=head_style) for col in bs_output.columns])
+            html.Tr([html.Th(col, style=head_style) for col in near_bs.columns])
         ),
         
         html.Tbody([
             html.Tr([
-                html.Td(bs_output.iloc[i][col], style=body_style) for col in bs_output.columns  # type: ignore
-            ]) for i in range(min(len(bs_output), 30))
+                html.Td(near_bs.iloc[i][col], style=body_style) for col in near_bs.columns  # type: ignore
+            ]) for i in range(min(len(near_bs), 30))
         ])
         
     ],
@@ -208,13 +216,59 @@ def update_bus_stops(n_clicks, input_value):
     
     )
 
+# second_callback: app.callback for nearest bus stop locations on a map (pane 2)
+@app.callback(
+    Output(component_id="near-map-output", component_property="figure"),
+    Input(component_id="near-button", component_property="n_clicks"),
+    State(component_id="near-input", component_property="value")
+)
+def update_near(n_clicks, input_value):
+    
+    # Bus stops close to current locations
+    near_bs, bs_output = nearest(input_value)
+    
+    # Concatenate current location to list of nearest bus stops 
+    curr_loc = [float(i) for i in input_value.split(", ")]
+    curr_loc = curr_loc + ["Current Location", "You are here."]
+    req_cols = ["latitude", "longitude", "description", "busStopCode"]
+    curr_loc_df = pd.DataFrame([curr_loc], columns=req_cols)
+    bs_output_curr = pd.concat([bs_output[req_cols], curr_loc_df])
+    
+    
+    # Plot latitude and longitude of bus stops onto map
+    markers_size = [14]*len(bs_output) + [18]
+    markers_col = ["#C63000"]*len(bs_output) + ["#002F00"]
+
+    mark_trace = go.Scattermapbox(lat=bs_output_curr["latitude"], 
+                                  lon=bs_output_curr["longitude"],
+                                  customdata=np.stack((bs_output_curr["description"], 
+                                                       bs_output_curr["busStopCode"]), axis=1),
+                                  mode="markers",
+                                  marker=dict(size=markers_size, color=markers_col),
+                                  hovertemplate="<b>Bus Stop</b>: %{customdata[0]}<br>" +
+                                                "<b>Bus Stop Code</b>: %{customdata[1]}" + 
+                                                "<extra></extra>")
+
+    fig = go.Figure(layout=go.Layout(mapbox_style="open-street-map",
+                                     mapbox=dict(center=dict(lat=curr_loc[0],
+                                                             lon=curr_loc[1]),
+                                                 zoom=15.3)))
+
+
+    fig.add_trace(mark_trace)
+    fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0},
+                      showlegend=False)
+    
+    return fig
+
+
 # app.callback for bus route map (pane 3)
 @app.callback(
     Output(component_id="map-output", component_property="figure"),
     Input(component_id="service-button", component_property="n_clicks"),
     State(component_id="service-input", component_property="value")
 )
-def update_map(n_clicks, input_value):
+def update_route(n_clicks, input_value):
     
     # Retrieve bus stop codes of bus routes for queried bus service number
     q_bus_stops = route(service_num=input_value)
