@@ -103,12 +103,16 @@ def nearest(geo_location):
     
     Parameters
     ----------
-    NA (at the moment)
+    geo_location : string of latitude and longitude 
+        Dash input value as text in strict 1.310429, 103.854368 format. Requires
+        up to six decimals for precision. String text will be parsed into list
+        of two float values. 
     
     Returns
     -------
-    Data frame containing the list of bus stops within 500m of current
-    location
+    Two data frames: 
+    1) first containing the list of bus stops within 500m of current location.
+    2) second containing the same list of bus stops with lat and long info.
     """
     
     # Fix current location coordinates in.
@@ -126,15 +130,16 @@ def nearest(geo_location):
 
     # Subset bus stops which are 500 metres away from current location.
     bs_output = bus_db[bus_db["distance"] < 0.5]
-    bs_output = (bs_output.drop(["serviceNo", "busStopSeq", "direction", 
-                                "latitude", "longitude", "distance"], axis=1)
-                          .drop_duplicates("busStopCode")
-                          .rename(columns={"busStopCode": "Bus Stop Code",
-                                           "roadName": "Road Name",
-                                           "description": "Description"})
-                          .sort_values("Description"))
+    near_bs = (bs_output.drop(["serviceNo", "busStopSeq", "direction", 
+                               "latitude", "longitude", "distance"], axis=1)
+                        .drop_duplicates("busStopCode")
+                        .rename(columns={"busStopCode": "Bus Stop Code",
+                                         "roadName": "Road Name",
+                                         "description": "Description"})
+                        .sort_values("Description"))    
     
-    return bs_output
+    # Returns two outputs: one for output table, one for output map
+    return near_bs, bs_output
 
 
 
